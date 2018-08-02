@@ -1,3 +1,6 @@
+import numpy as np
+import pprint as pp 
+
 from copy import deepcopy
 from typing import List, Dict
 
@@ -36,27 +39,33 @@ class AtisWorld():
 
     def init_all_valid_actions(self) -> Dict[str, List[str]]:
         """
-        We initialize the world's valid actions with that of the context. This means that the strings
-        and numbers that were valid earlier in the interaction are also valid. We then add new valid strings
-        and numbers from the current utterance.
+        We initialize the valid actions with the global actions. We then iterate through the
+        utterances up to and including the current utterance and add the valid strings.
         """
+        linking_scores = []
+
         valid_actions = deepcopy(self.sql_table_context.valid_actions)
         for string in self.get_strings_from_utterance():
             action = format_action('string', string)
             if action not in valid_actions['string']:
                 valid_actions['string'].append(action)
 
-        numbers = ['0', '1']
-        for utterance in self.utterances:
-            print(utterance)
-            print(get_numbers_from_utterance(utterance))
-            utterance_numbers, linking_scores = get_numbers_from_utterance(utterance)
-            numbers.extend(utterance_numbers)
-            print(numbers)
-            for number in numbers:
-                action = format_action('number', number)
-                if action not in valid_actions['number']:
-                    valid_actions['number'].append(action)
+        numbers = {'0', '1'}
+        for idx, (utterance, tokenized_utterance) in enumerate(zip(self.utterances, self.tokenized_utterances)):
+            utterance_numbers, utterance_linking_scores = get_numbers_from_utterance(utterance, tokenized_utterance)
+            numbers.update(set(utterance_numbers))
+            if idx == len(self.utterances) - 1:
+                linking_scores.extend(utterance_linking_scores)
+        
+        print(numbers)
+        for number in list(numbers):
+            action = format_action('number', number)
+            # if action not in valid_actions['number']:
+            valid_actions['number'].append(action)
+        
+        np_linking = np.array(linking_scores)
+        pp.pprint(np_linking)
+        print(np_linking.shape)
 
         return valid_actions
 

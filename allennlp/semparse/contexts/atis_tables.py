@@ -10,19 +10,54 @@ HOUR_TO_TWENTY_FOUR = 100
 HOURS_IN_DAY = 2400
 AROUND_RANGE = 30
 
-def get_times_from_utterance(utterance: str) -> List[str]:
+def get_regex_match(regex: str,
+                    utterance: str,
+                    tokenized_utterance: List[Token],
+                    char_offset_to_token_index,
+                    map_match_to_query_value):
+    numbers = []
+    linking_scores = []
+    number_regex = re.compile(regex)
+    for match in number_regex.finditer(utterance):
+        mapped_values = map_match_to_query_value(match.group())
+        numbers.extend(mapped_values)
+        idx = char_offset_to_token_index[match.start()]
+        entity_score = [0 for i in range(len(tokenized_utterance))] 
+        entity_score[idx] = 1
+        number_entity_score = [entity_score for i in range(len(mapped_values))]
+        linking_scores.extend(number_entity_score)
+    return numbers, linking_scores 
+
+def get_times_from_utterance(utterance: str,
+                             tokenized_utterance: List[Token],
+                             char_offset_to_token_index: Dict[int, int]) -> List[str]:
     """
     Given an utterance, get the numbers that correspond to times and convert time
     for example: convert ``7pm`` to 1900
     """
-    pm_times = [int(pm_str.rstrip('pm')) * HOUR_TO_TWENTY_FOUR + TWELVE_TO_TWENTY_FOUR
-                for pm_str in re.findall(r'\d+pm', utterance)]
-    am_times = [int(am_str.rstrip('am')) * HOUR_TO_TWENTY_FOUR
-                for am_str in re.findall(r"\d+", utterance)]
+
+    pm_times, pm_linking_scores= get_regex_match(r'\d+pm', utterance, tokenized_utterance,
+            char_offset_to_token_index,
+            lambda match : [int(match.rstrip('pm')) * HOUR_TO_TWENTY_FOUR + TWELVE_TO_TWENTY_FOUR])
+
+    am_times, am_linking_scores= get_regex_match(r'\d+am', utterance, tokenized_utterance,
+            char_offset_to_token_index,
+            lambda match : [int(match.rstrip('am')) * HOUR_TO_TWENTY_FOUR])
+
+    oclock_times, oclock_linking_scores= get_regex_match(r"\d+\so'clock", utterance, tokenized_utterance,
+            char_offset_to_token_index,
+            lambda match : [int(match.rstrip("o'clock")) * HOUR_TO_TWENTY_FOUR,
+                            (int(match.rstrip("o'clock")) * HOUR_TO_TWENTY_FOUR + TWELVE_TO_TWENTY_FOUR) % HOURS_IN_DAY]
+            )
+    print(oclock_times)
+    print(oclock_linking_scores)
+    ''' 
     oclock_times = [int(oclock_str.rstrip("o'clock")) * HOUR_TO_TWENTY_FOUR
                     for oclock_str in re.findall(r"\d+\so'clock", utterance)]
+
     oclock_times = oclock_times + [(oclock_time + TWELVE_TO_TWENTY_FOUR) % HOURS_IN_DAY \
                                    for oclock_time in oclock_times]
+    '''
     times = am_times + pm_times + oclock_times
     if 'noon' in utterance:
         times.append(1200)
@@ -34,7 +69,7 @@ def get_times_from_utterance(utterance: str) -> List[str]:
             around_times.append((time - HOUR_TO_TWENTY_FOUR + AROUND_RANGE) % HOURS_IN_DAY)
 
     times += around_times
-
+    print('times', times) 
     return [str(time) for time in times]
 
 def get_date_from_utterance(tokenized_utterance: List[Token],
@@ -65,18 +100,30 @@ def get_date_from_utterance(tokenized_utterance: List[Token],
         return datetime(year, month, day)
     return None
 
-def get_numbers_from_utterance(utterance: str) -> List[str]:
+def get_numbers_from_utterance(utterance: str, tokenized_utterance: List[Token]) -> List[str]:
     """
     Given an utterance, find all the numbers that are in the action space.
     """
+
+    # When we use a regex to find numbers or strings, we need a mapping from
+    # the character to which token triggered it.
+    char_offset_to_token_index = {token.idx : token_idx for token_idx, token
+                                  in enumerate(tokenized_utterance)}
     linking_scores = []
-
     numbers = []
-    numbers.extend(re.findall(r'\d+', utterance))
-    numbers.extend([str(int(num_str.rstrip('pm')) * HOUR_TO_TWENTY_FOUR + TWELVE_TO_TWENTY_FOUR)
-                    for num_str in re.findall(r'\d+', utterance)])
+    print(char_offset_to_token_index)
+    print(tokenized_utterance)
 
-    numbers.extend(get_times_from_utterance(utterance))
+    number_regex = re.compile(r'\d+')
+    for match in number_regex.finditer(utterance):
+        print('match', match.start(), match.group)
+        numbers.append(match.group()) 
+        idx = char_offset_to_token_index[match.start()]
+        number_entity_score = [0 for i in range(len(tokenized_utterance))]
+        number_entity_score[idx] = 1
+        linking_scores.append(number_entity_score)
+
+    numbers.extend(get_times_from_utterance(utterance, tokenized_utterance, char_offset_to_token_index))
 
     words = utterance.split(' ')
     for idx, word in enumerate(words):

@@ -3,10 +3,12 @@ import json
 from allennlp.common.testing import AllenNlpTestCase
 from allennlp.semparse.worlds.atis_world import AtisWorld
 
+from parsimonious.expressions import ParseError
+
 class TestAtisWorld(AllenNlpTestCase):
     def setUp(self):
         super().setUp()
-        test_filename = self.FIXTURES_ROOT / "data" / "atis" / "sample.json"
+        test_filename = self.FIXTURES_ROOT / "data" / "atis" / "train.json"
         self.data = open(test_filename).readlines()
 
     def test_atis_global_actions(self): # pylint: disable=no-self-use
@@ -112,7 +114,9 @@ class TestAtisWorld(AllenNlpTestCase):
                 {'conj -> ["OR"]', 'conj -> ["AND"]'}
         assert set(valid_actions['distinct']) == \
                {'distinct -> [""]', 'distinct -> ["DISTINCT"]'}
-        assert set(valid_actions['number']) == set()
+        assert set(valid_actions['number']) == \
+                {'number -> ["0"]',
+                 'number -> ["1"]'}
         assert set(valid_actions['string']) == set()
         assert set(valid_actions['col_ref']) == \
                 {'col_ref -> ["*"]',
@@ -925,3 +929,37 @@ class TestAtisWorld(AllenNlpTestCase):
              'value -> [pos_value]',
              'where_clause -> ["WHERE", "(", conditions, ")"]',
              'where_clause -> ["WHERE", conditions]']
+
+    def test_atis_debug(self):
+        utterance = "what is the earliest flight in 9 o'clock 1993 june fourth from boston to pittsburgh"
+        print(utterance)
+        world = AtisWorld([utterance])
+
+    def test_atis_parse_coverage(self):
+        num_queries = 0
+        num_parsed = 0
+
+        for idx, line in enumerate(self.data):
+            line = json.loads(line)
+            utterances = []
+            for current_idx, current_interaction in enumerate(line['interaction']):
+                nl_key = 'utterance'
+                if nl_key not in current_interaction:
+                        nl_key = 'nl_with_dates'
+                utterances.append(current_interaction[nl_key])
+                world = AtisWorld(utterances)
+                try:
+                    num_queries += 1
+                    action_sequence = world.get_action_sequence(current_interaction['sql'].split('\n')[0])
+                    num_parsed+= 1
+                    print("Parsed {} out of {}, coverage: {}".format(num_parsed, num_queries, num_parsed/num_queries))
+
+                except ParseError as error:
+                    print('parse error')
+                    print(utterances)
+                    print(current_interaction['sql'])
+                    continue
+            
+        print("Parsed {} out of {}, coverage: {}".format(num_parsed, num_queries, num_parsed/num_queries))
+ 
+        

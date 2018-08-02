@@ -69,7 +69,6 @@ def generate_one_of_string(nonterminal: str, literals: List[str]) -> str:
     return  f'\n{nonterminal} \t\t = ""'
 
 def format_action(nonterminal: str, right_hand_side: str) -> str:
-    print(f"{nonterminal} : {right_hand_side}")
     if right_hand_side.upper() in KEYWORDS:
         right_hand_side = right_hand_side.upper()
 
