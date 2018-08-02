@@ -51,22 +51,31 @@ class AtisWorld():
                 valid_actions['string'].append(action)
 
         numbers = {'0', '1'}
+        number_linking_dict = {}
         for idx, (utterance, tokenized_utterance) in enumerate(zip(self.utterances, self.tokenized_utterances)):
-            utterance_numbers, utterance_linking_scores = get_numbers_from_utterance(utterance, tokenized_utterance)
-            numbers.update(set(utterance_numbers))
-            if idx == len(self.utterances) - 1:
-                linking_scores.extend(utterance_linking_scores)
+            number_linking_dict = get_numbers_from_utterance(utterance, tokenized_utterance)
+            numbers.update(set(number_linking_dict.keys()))
+        numbers = sorted(numbers, reverse=True)
+
+        # We construct the linking scores here.
+        number_linking_scores = []
+        for number in sorted(numbers, reverse=True):
+            entity_linking = [0 for i in range(len(tokenized_utterance))]
+            if number in number_linking_dict:
+                for idx in number_linking_dict[number]:
+                    entity_linking[idx] = 1
+            number_linking_scores.append(entity_linking)
         
-        print(numbers)
+        linking_scores.extend(number_linking_scores)
+
         for number in list(numbers):
             action = format_action('number', number)
-            # if action not in valid_actions['number']:
             valid_actions['number'].append(action)
         
         np_linking = np.array(linking_scores)
+        print(numbers)
         pp.pprint(np_linking)
         print(np_linking.shape)
-
         return valid_actions
 
     def get_grammar_str(self) -> str:

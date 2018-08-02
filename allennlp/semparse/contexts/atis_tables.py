@@ -115,8 +115,10 @@ def get_numbers_from_utterance(utterance: str, tokenized_utterance: List[Token])
     # such as "about" or "approximately".
     approx_indices = [idx for idx, token in enumerate(tokenized_utterance) if token.text in APPROX_WORDS]
     
-    number_linking_dict = defaultdict(list)
-    # TODO Add the default numbers
+    # number_linking_dict = defaultdict(list)
+    number_linking_dict = get_regex_match(r'\d+', utterance, tokenized_utterance,
+            char_offset_to_token_index,
+            lambda match : [int(match)], approx_indices)
 
     times_linking_dict = get_times_from_utterance(utterance,
                              tokenized_utterance,
@@ -139,18 +141,8 @@ def get_numbers_from_utterance(utterance: str, tokenized_utterance: List[Token])
         if bigram in DAY_NUMBERS:
             number_linking_dict[str(DAY_NUMBERS[bigram])].append(idx)
 
-    numbers = [] 
-    linking_scores = []
-
-    print(number_linking_dict)
-
-    for number in sorted(number_linking_dict, reverse=True):
-        entity_linking = [0 for i in range(len(tokenized_utterance))]
-        for idx in number_linking_dict[number]:
-            entity_linking[idx] = 1
-        linking_scores.append(entity_linking)
-    return sorted(number_linking_dict, reverse=True), linking_scores
-
+    return number_linking_dict
+    
 def get_trigger_dict(trigger_lists: List[List[str]],
                      trigger_dicts: List[Dict[str, List[str]]]) -> Dict[str, List[str]]:
     merged_trigger_dict: Dict[str, List[str]] = defaultdict(list)
