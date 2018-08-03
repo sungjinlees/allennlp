@@ -134,7 +134,8 @@ def get_numbers_from_utterance(utterance: str, tokenized_utterance: List[Token])
         if token.text in DAY_NUMBERS:
             number_linking_dict[str(DAY_NUMBERS[token.text])].append(idx)
         if token.text in MISC_TIME_TRIGGERS:
-            number_linking_dict[str(MISC_TIME_TRIGGERS[token.text])].extend(idx)
+            for time in MISC_TIME_TRIGGERS[token.text]:
+                number_linking_dict[time].append(idx)
             
     for tens, digits in zip(tokenized_utterance, tokenized_utterance[1:]):
         bigram = ' '.join([tens.text, digits.text])
