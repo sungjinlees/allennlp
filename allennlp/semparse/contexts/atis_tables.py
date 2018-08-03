@@ -25,6 +25,12 @@ def get_regex_match(regex: str,
                     char_offset_to_token_index: Dict[int, int],
                     map_match_to_query_value: Callable[[str], str],
                     approx_indices: List[int]) -> Dict[str, List[int]]:
+    """
+    Given a regex, we want to find the matches in the utterance and then convert
+    these to the values that appear in the query and token indices they correspond to.
+    ``map_match_to_query_value`` is a function that converts the regex matches to the
+    values that appear in the query.
+    """
     linking_scores_dict = defaultdict(list)
     number_regex = re.compile(regex)
     for match in number_regex.finditer(utterance):
@@ -115,7 +121,6 @@ def get_numbers_from_utterance(utterance: str, tokenized_utterance: List[Token])
     # such as "about" or "approximately".
     approx_indices = [idx for idx, token in enumerate(tokenized_utterance) if token.text in APPROX_WORDS]
     
-    # number_linking_dict = defaultdict(list)
     number_linking_dict = get_regex_match(r'\d+', utterance, tokenized_utterance,
             char_offset_to_token_index,
             lambda match : [int(match)], approx_indices)

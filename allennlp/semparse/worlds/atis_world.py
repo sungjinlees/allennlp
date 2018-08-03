@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 import pprint as pp 
 
 from copy import deepcopy
@@ -32,7 +32,8 @@ class AtisWorld():
         self.tokenized_utterances = [self.tokenizer.tokenize(utterance) for utterance in self.utterances]
         valid_actions, linking_scores = self.init_all_valid_actions()
         self.valid_actions: Dict[str, List[str]] = valid_actions 
-        self.linking_scores: List[List[int]] = linking_scores 
+        self.linking_scores: numpy.ndarray = linking_scores
+        print(linking_scores)
         self.grammar_str: str = self.get_grammar_str()
         self.grammar_with_context: Grammar = Grammar(self.grammar_str)
 
@@ -94,8 +95,7 @@ class AtisWorld():
             action = format_action('number', number)
             valid_actions['number'].append(action)
         
-        np_linking = np.array(linking_scores)
-        return valid_actions, linking_scores
+        return valid_actions, numpy.transpose(numpy.array(linking_scores))
 
     def get_grammar_str(self) -> str:
         """
