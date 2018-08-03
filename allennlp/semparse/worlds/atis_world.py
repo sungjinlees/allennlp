@@ -33,7 +33,7 @@ class AtisWorld():
         valid_actions, linking_scores = self.init_all_valid_actions()
         self.valid_actions: Dict[str, List[str]] = valid_actions 
 
-        # This is shape (number_tokens, number_entities)
+        # This is shape (number_entities, number_utterance_tokens)
         self.linking_scores: numpy.ndarray = linking_scores
         print(linking_scores)
         self.grammar_str: str = self.get_grammar_str()
@@ -99,7 +99,7 @@ class AtisWorld():
         
         print(strings)
         print(numbers)
-        return valid_actions, numpy.transpose(numpy.array(linking_scores))
+        return valid_actions, numpy.array(linking_scores)
 
     def get_grammar_str(self) -> str:
         """
@@ -159,3 +159,11 @@ class AtisWorld():
             for action in action_list:
                 all_actions.add(action)
         return sorted(all_actions)
+
+    def __eq__(self, other):
+        if isinstance(self, other.__class__):
+            return (self.valid_actions == other.valid_actions and  
+                   numpy.array_equal(self.linking_scores, other.linking_scores) and
+                   self.utterances ==  other.utterances and
+                   self.grammar_str == other.grammar_str)
+        return False  
