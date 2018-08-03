@@ -17,13 +17,14 @@ class TestAtisReader(AllenNlpTestCase):
         for prod in instance.fields['actions'].field_list:
             if prod.rule.startswith('string'):
                 valid_strs.add(prod.rule)
-        assert valid_strs == set(instance.fields['world'].metadata['string'])
+        world = instance.fields['world'].metadata
+        assert valid_strs == set(world.valid_actions['string'])
         
         instance = instances[1]
         valid_strs = set()
         for prod in instance.fields['actions'].field_list:
             if prod.rule.startswith('string'):
                 valid_strs.add(prod.rule)
-
-        assert valid_strs == set(instance.fields['world'].metadata['string'])
-
+        world = instance.fields['world'].metadata
+        assert valid_strs == set(world.valid_actions['string'])
+ 

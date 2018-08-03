@@ -39,12 +39,13 @@ def get_regex_match(regex: str,
         # If the time appears after a word like ``about`` then we also add
         # the times that mark the start and end of the allowed range. 
         approx_times = []
-        if char_offset_to_token_index[match.start()] - 1 in approx_indices:
+        if char_offset_to_token_index.get(match.start(), 0) - 1 in approx_indices:
             approx_times.extend(get_approx_times(query_values))
 
         query_values.extend(approx_times)
         for query_value in query_values:
-            linking_scores_dict[str(query_value)].append(char_offset_to_token_index[match.start()])
+            if match.start() in char_offset_to_token_index:
+                linking_scores_dict[str(query_value)].append(char_offset_to_token_index[match.start()])
     return linking_scores_dict 
 
 def get_times_from_utterance(utterance: str,

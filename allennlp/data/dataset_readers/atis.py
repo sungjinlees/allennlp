@@ -8,7 +8,7 @@ from parsimonious.exceptions import ParseError
 
 from allennlp.common.file_utils import cached_path
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.fields import Field, ListField, IndexField, ProductionRuleField, TextField, MetadataField
+from allennlp.data.fields import Field, ArrayField, ListField, IndexField, ProductionRuleField, TextField, MetadataField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
 from allennlp.data.tokenizers import Tokenizer, WordTokenizer
@@ -119,11 +119,14 @@ class AtisDatasetReader(DatasetReader):
 
         action_sequence_field = [ListField(index_fields)]
 
-        world_field = MetadataField(deepcopy(world.valid_actions))
+        world_field = MetadataField(world)
+        
 
         fields = {'utterance' : utterance_field,
                   'actions' : action_field,
                   'world' : world_field,
-                  'target_action_sequence' : ListField(action_sequence_field)}
+                  'target_action_sequence' : ListField(action_sequence_field),
+                  'linking_scores' : ArrayField(world.linking_scores)
+                  }
 
         return Instance(fields)

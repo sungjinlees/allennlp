@@ -32,6 +32,8 @@ class AtisWorld():
         self.tokenized_utterances = [self.tokenizer.tokenize(utterance) for utterance in self.utterances]
         valid_actions, linking_scores = self.init_all_valid_actions()
         self.valid_actions: Dict[str, List[str]] = valid_actions 
+
+        # This is shape (number_tokens, number_entities)
         self.linking_scores: numpy.ndarray = linking_scores
         print(linking_scores)
         self.grammar_str: str = self.get_grammar_str()
@@ -95,6 +97,8 @@ class AtisWorld():
             action = format_action('number', number)
             valid_actions['number'].append(action)
         
+        print(strings)
+        print(numbers)
         return valid_actions, numpy.transpose(numpy.array(linking_scores))
 
     def get_grammar_str(self) -> str:

@@ -931,10 +931,10 @@ class TestAtisWorld(AllenNlpTestCase):
              'where_clause -> ["WHERE", conditions]']
 
     def test_atis_debug(self):
-        utterance = "what is the earliest flight in 9 o'clock 1993 june fourth from boston to pittsburgh"
+        utterance = "9am new york 9pm united united united united"
         print(utterance)
         world = AtisWorld([utterance])
-
+    
     def test_atis_parse_coverage(self):
         num_queries = 0
         num_parsed = 0
@@ -945,7 +945,9 @@ class TestAtisWorld(AllenNlpTestCase):
             for current_idx, current_interaction in enumerate(line['interaction']):
                 nl_key = 'utterance'
                 if nl_key not in current_interaction:
-                        nl_key = 'nl_with_dates'
+                    nl_key = 'nl_with_dates'
+                if not current_interaction[nl_key]:
+                    continue
                 utterances.append(current_interaction[nl_key])
                 world = AtisWorld(utterances)
                 try:
@@ -961,5 +963,4 @@ class TestAtisWorld(AllenNlpTestCase):
                     continue
             
         print("Parsed {} out of {}, coverage: {}".format(num_parsed, num_queries, num_parsed/num_queries))
- 
-        
+         
