@@ -6,7 +6,6 @@ import torch
 from allennlp.nn.decoding import GrammarState
 
 def is_nonterminal(token: str):
-    print(token)
     if token[0] == '"' and token[-1] == '"':
         return False
     return True
@@ -19,7 +18,6 @@ class AtisGrammarState(GrammarState):
         description of what we're returning here.
         """
         actions = self._valid_actions[self._nonterminal_stack[-1]]
-        print('get valid actions for: ', self._nonterminal_stack[-1])
 
         '''
         context_actions = []
