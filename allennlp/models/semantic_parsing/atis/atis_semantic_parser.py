@@ -152,13 +152,8 @@ class AtisSemanticParser(Model):
         # entity_type_embeddings = self._entity_type_encoder_embedding(entity_types)
         # entity_embeddings = torch.nn.functional.tanh(entity_type_embeddings) # Maybe leave out embedding
 
-        # (batch_size, num_utterance_tokens, num_entities)
-        # linking_probabilities = self._get_linking_probabilities(world, linking_scores.transpose(1, 2), utterance_mask, entity_type_dict)
-
         # (batch_size, num_utterance_tokens, embedding_dim)
-        # link_embedding = util.weighted_sum(entity_embeddings, linking_probabilities) # probably don't need link embedding
-
-        encoder_input = torch.cat([embedded_utterance, embedded_utterance], 2)
+        encoder_input = embedded_utterance
 
         # (batch_size, utterance_length, encoder_output_dim)
         encoder_outputs = self._dropout(self._encoder(encoder_input, utterance_mask))

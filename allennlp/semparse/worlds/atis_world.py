@@ -35,7 +35,6 @@ class AtisWorld():
 
         # This is shape (number_entities, number_utterance_tokens)
         self.linking_scores: numpy.ndarray = linking_scores
-        print(linking_scores)
         self.grammar_str: str = self.get_grammar_str()
         self.grammar_with_context: Grammar = Grammar(self.grammar_str)
 
@@ -97,8 +96,6 @@ class AtisWorld():
             action = format_action('number', number)
             valid_actions['number'].append(action)
         
-        print(strings)
-        print(numbers)
         return valid_actions, numpy.array(linking_scores)
 
     def get_grammar_str(self) -> str:
