@@ -61,7 +61,10 @@ class AtisDatasetReader(DatasetReader):
                     if nl_key not in current_interaction: 
                         nl_key = 'nl_with_dates'
 
+                    if not current_interaction[nl_key]:
+                        continue
                     utterances.append(current_interaction[nl_key])
+                    
                     world = AtisWorld(utterances)
 
                     try:
@@ -97,6 +100,9 @@ class AtisDatasetReader(DatasetReader):
         """
         tokenized_utterance = self._tokenizer.tokenize(utterance.lower())
         utterance_field = TextField(tokenized_utterance, self._token_indexers)
+
+        if not tokenized_utterance:
+            return None
 
         production_rule_fields: List[Field] = []
 
