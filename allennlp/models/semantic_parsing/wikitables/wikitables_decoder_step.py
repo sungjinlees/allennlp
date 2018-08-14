@@ -187,8 +187,11 @@ class WikiTablesDecoderStep(DecoderStep[WikiTablesDecoderState]):
             predicted_action_embedding = predicted_action_embeddings[group_index]
             
             instance_action_ids = []
-            output_action_embeddings = torch.zeros(0, dtype=torch.float)
-            embedded_action_logits = torch.zeros(0, dtype=torch.float)
+            # output_action_embeddings = torch.zeros(0, dtype=torch.float)
+            # embedded_action_logits = torch.zeros(0, dtype=torch.float)
+            output_action_embeddings = predicted_action_embedding.new_tensor([], dtype=torch.float) 
+            embedded_action_logits = predicted_action_embedding.new_tensor([], dtype=torch.float) 
+
 
             if 'global' in instance_actions:
                 action_embeddings, output_action_embeddings, embedded_actions = instance_actions['global']
