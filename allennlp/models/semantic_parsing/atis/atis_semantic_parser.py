@@ -126,7 +126,7 @@ class AtisSemanticParser(Model):
                                       utterance: Dict[str, torch.LongTensor],
                                       world: List[AtisWorld],
                                       actions: List[List[ProductionRuleArray]],
-                                      atis_linking_scores: ArrayField,
+                                      atis_linking_scores: torch.Tensor,
                                       add_world_to_initial_state: bool = False,
                                       checklist_states: List[ChecklistState] = None) -> Dict:
         """
@@ -166,6 +166,7 @@ class AtisSemanticParser(Model):
 
         initial_score = embedded_utterance.data.new_zeros(batch_size)
 
+
         # To make grouping states together in the decoder easier, we convert the batch dimension in
         # all of our tensors into an outer list.  For instance, the encoder outputs have shape
         # `(batch_size, utterance_length, encoder_output_dim)`.  We need to convert this into a list
@@ -185,7 +186,7 @@ class AtisSemanticParser(Model):
 
         initial_grammar_state = [self._create_grammar_state(world[i],
                                                             actions[i],
-                                                            atis_linking_scores, # TODO actually make a linking score
+                                                            atis_linking_scores,
                                                             entity_types[i])
                                  for i in range(batch_size)]
 
@@ -360,7 +361,11 @@ class AtisSemanticParser(Model):
             if global_actions:
                 # Then we get the ebmedded representations of the global actions.
                 global_action_tensors, global_action_ids = zip(*global_actions)
-                global_action_tensor = torch.cat(global_action_tensors, dim=0)
+                # global_action_tensor = torch.cat(global_action_tensors, dim=0)
+                global_action_tensor = entity_types.new_tensor(torch.cat(global_action_tensors, dim=0), dtype=torch.long)
+                # Whats being fed to Embeddings needs to be on CUDA
+
+
                 global_input_embeddings = self._action_embedder(global_action_tensor)
                 global_output_embeddings = self._output_action_embedder(global_action_tensor)
                 translated_valid_actions[key]['global'] = (global_input_embeddings,
@@ -374,9 +379,10 @@ class AtisSemanticParser(Model):
 
                 entity_linking_scores = linking_scores[0][entity_ids] # Check the shape here
 
-
                 entity_type_tensor = entity_types[entity_ids]
                 entity_type_embeddings = self._entity_type_decoder_embedding(entity_type_tensor)
+               
+                entity_type_embeddings = entity_types.new_tensor(entity_type_embeddings, dtype=torch.float)
                 translated_valid_actions[key]['linked'] = (entity_linking_scores,
                                                            entity_type_embeddings,
                                                            list(linked_action_ids))
@@ -436,7 +442,7 @@ class AtisSemanticParser(Model):
                 utterance: Dict[str, torch.LongTensor],
                 world: List[AtisWorld], 
                 actions: List[List[ProductionRuleArray]],
-                linking_scores: ArrayField,
+                linking_scores: torch.Tensor,
                 target_action_sequence: torch.LongTensor = None) -> Dict[str, torch.Tensor]:
         # pylint: disable=arguments-differ
         """
