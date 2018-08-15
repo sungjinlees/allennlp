@@ -468,10 +468,6 @@ class AtisSemanticParser(Model):
             ``ProductionRuleArray`` using a ``ProductionRuleField``.  We will embed all of these
             and use the embeddings to determine which action to take at each timestep in the
             decoder.
-        example_lisp_string : ``List[str]``, optional (default=None)
-            The example (lisp-formatted) string corresponding to the given input.  This comes
-            directly from the ``.examples`` file provided with the dataset.  We pass this to SEMPRE
-            when evaluating denotation accuracy; it is otherwise unused.
         target_action_sequences : torch.Tensor, optional (default=None)
            A list of possibly valid action sequences, where each action is an index into the list
            of possible actions.  This tensor has shape ``(batch_size, num_action_sequences,
@@ -488,6 +484,8 @@ class AtisSemanticParser(Model):
             target_mask = target_action_sequence != self._action_padding_index
         else:
             target_mask = None
+
+        print('target_action_sequence', target_action_sequence.size())
 
         if self.training:
             return self._decoder_trainer.decode(initial_state,
@@ -512,7 +510,7 @@ class AtisSemanticParser(Model):
             best_final_states = self._beam_search.search(num_steps,
                                                          initial_state,
                                                          self._decoder_step,
-                                                         keep_final_unfinished_states=False)
+                                                         keep_final_unfinished_states=True)
             outputs['best_action_sequence'] = []
             outputs['debug_info'] = []
             outputs['entities'] = []
@@ -539,8 +537,6 @@ class AtisSemanticParser(Model):
                         self._has_logical_form(0.0)
                         logical_form = 'Error producing logical form'
                     '''
-                    if example_lisp_string:
-                        self._denotation_accuracy(logical_form, example_lisp_string[i])
                     outputs['best_action_sequence'].append(action_strings)
                     # outputs['logical_form'].append(logical_form)
                     outputs['debug_info'].append(best_final_states[i][0].debug_info[0])  # type: ignore
@@ -548,8 +544,8 @@ class AtisSemanticParser(Model):
                 else:
                     outputs['logical_form'].append('')
                     self._has_logical_form(0.0)
-                    #if example_lisp_string:
-                    #     self._denotation_accuracy(None, example_lisp_string[i])
+            print('best action seq', outputs['best_action_sequence'])
+            print('best action seq len', len(outputs['best_action_sequence'][0]))
             return outputs
 
     @classmethod
